@@ -204,6 +204,72 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
             </div>
           )}
 
+          {/* Skenario Timeline */}
+          {result.scaffoldData?.skenarioHistory && result.scaffoldData.skenarioHistory.length > 0 && (
+            <div className="glass-card rounded-2xl p-5 mb-5 text-left">
+              <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <span className="text-lg">🎯</span> Timeline Skenario Adaptif
+              </h4>
+              
+              {/* Timeline Visualization */}
+              <div className="space-y-2 mb-4">
+                {result.scaffoldData.skenarioHistory.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center text-lg">
+                      {item.skenario.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-400">Soal {item.questionNumber}</span>
+                        <span className={`text-xs font-bold ${item.skenario.color}`}>
+                          {item.skenario.name}
+                        </span>
+                      </div>
+                      <div className={`h-1.5 rounded-full bg-gradient-to-r ${item.skenario.gradient}`}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Skenario Insights */}
+              <div className="bg-white/5 rounded-xl p-3">
+                <p className="text-xs text-gray-400 mb-2">Insight:</p>
+                <div className="space-y-1">
+                  {(() => {
+                    const history = result.scaffoldData?.skenarioHistory || [];
+                    const firstSkenario = history[0]?.skenario;
+                    const lastSkenario = history[history.length - 1]?.skenario;
+                    
+                    if (!firstSkenario || !lastSkenario) return null;
+
+                    const improved = lastSkenario.id < firstSkenario.id;
+                    const worsened = lastSkenario.id > firstSkenario.id;
+
+                    if (improved) {
+                      return (
+                        <p className="text-xs text-green-300">
+                          ✅ Kamu menunjukkan perbaikan! Dari {firstSkenario.name} menjadi {lastSkenario.name}
+                        </p>
+                      );
+                    } else if (worsened) {
+                      return (
+                        <p className="text-xs text-orange-300">
+                          ⚠️ Kamu semakin kesulitan. Coba review materi dan latihan lagi.
+                        </p>
+                      );
+                    } else {
+                      return (
+                        <p className="text-xs text-blue-300">
+                          💪 Kamu konsisten di level {firstSkenario.name}. Pertahankan!
+                        </p>
+                      );
+                    }
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Topic Info */}
           <div className="glass-card rounded-2xl p-4 mb-5">
             <p className="text-xs text-gray-400 mb-1">Topik yang dimainkan:</p>

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Topic, Question } from '../data/questions';
 import ScaffoldingHelper from './ScaffoldingHelper';
+import SkenarioIndicator from './SkenarioIndicator';
+import { SkenarioEngine, SkenarioLevel, PerformanceMetrics } from '../utils/SkenarioEngine';
 
 interface QuizGameProps {
   topic: Topic;
@@ -13,6 +15,7 @@ export interface ScaffoldData {
   avgScaffoldLevel: number;
   autoTriggered: number;
   manualTriggered: number;
+  skenarioHistory: { skenario: SkenarioLevel; questionNumber: number }[];
 }
 
 const topicColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
@@ -33,6 +36,16 @@ const WRONG_ANSWERS_FOR_LEVEL: Record<number, number> = {
 };
 
 export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
+  // Initialize Skenario Engine
+  const skenarioEngineRef = useRef(new SkenarioEngine());
+  const [currentSkenario, setCurrentSkenario] = useState<SkenarioLevel>(
+    skenarioEngineRef.current.getCurrentSkenario()
+  );
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>(
+    skenarioEngineRef.current.getMetrics()
+  );
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -131,6 +144,35 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
     const correct = answerIndex === shuffledQuestions[currentQuestion].correctAnswer;
     setIsCorrect(correct);
     
+    // Calculate time spent on this question
+    const timeSpent = (Date.now() - questionStartTime) / 1000;
+    
+    // Record answer in Skenario Engine
+    skenarioEngineRef.current.recordAnswer(correct, timeSpent);
+    
+    // Update skenario and metrics
+    const newSkenario = skenarioEngineRef.current.getCurrentSkenario();
+    const newMetrics = skenarioEngineRef.current.getMetrics();
+    setCurrentSkenario(newSkenario);
+    setPerformanceMetrics(newMetrics);
+    
+    // Apply skenario config to scaffolding
+    const skenarioConfig = newSkenario.scaffoldingConfig;
+    if (skenarioConfig.forceExpand && !scaffoldExpanded) {
+      setScaffoldExpanded(true);
+    }
+    if (skenarioConfig.autoUnlockLevels.length > 0) {
+      const maxAutoLevel = Math.max(...skenarioConfig.autoUnlockLevels);
+      if (currentScaffoldLevel < maxAutoLevel) {
+        setCurrentScaffoldLevel(maxAutoLevel);
+      }
+    }
+    
+    // Show notification if skenario changed
+    if (newSkenario.scaffoldingConfig.notificationMessage) {
+      showNotification(newSkenario.scaffoldingConfig.notificationMessage);
+    }
+    
     if (correct) {
       setCorrectCount(prev => prev + 1);
       // Record scaffold level used for this question
@@ -162,6 +204,7 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
         setTimeLeft(45);
         setTimerActive(true);
         setAnimateIn(true);
+        setQuestionStartTime(Date.now()); // Reset question timer
         // Reset scaffolding for next question
         setCurrentScaffoldLevel(0);
         setWrongAttempts(0);
@@ -179,6 +222,7 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
           avgScaffoldLevel: avgLevel,
           autoTriggered,
           manualTriggered,
+          skenarioHistory: skenarioEngineRef.current.getSkenarioHistory(),
         });
       }
     }, 300);
@@ -206,6 +250,13 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Skenario Indicator */}
+      <SkenarioIndicator
+        currentSkenario={currentSkenario}
+        metrics={performanceMetrics}
+        isVisible={performanceMetrics.totalQuestions > 0}
+      />
+
       {/* Scaffold Notification */}
       {showScaffoldNotification && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-slideDown">
