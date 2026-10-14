@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { topics, Topic } from '../data/questions';
 import TopicCard from './TopicCard';
-import QuizGame from './QuizGame';
+import QuizGame, { ScaffoldData } from './QuizGame';
 import ResultScreen from './ResultScreen';
 import ProfilePage from './ProfilePage';
 import Leaderboard from './Leaderboard';
@@ -15,6 +15,7 @@ interface GameResult {
   score: number;
   totalQuestions: number;
   correctAnswers: number;
+  scaffoldData?: ScaffoldData;
 }
 
 export default function Dashboard() {
@@ -30,7 +31,7 @@ export default function Dashboard() {
     setPageState('playing');
   };
 
-  const handleGameComplete = (correct: number, total: number) => {
+  const handleGameComplete = (correct: number, total: number, scaffoldData?: ScaffoldData) => {
     if (!selectedTopic) return;
 
     const result: GameResult = {
@@ -38,6 +39,7 @@ export default function Dashboard() {
       score: correct * 100,
       totalQuestions: total,
       correctAnswers: correct,
+      scaffoldData,
     };
     setGameResult(result);
     

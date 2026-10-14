@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Topic, Question } from '../data/questions';
 import ScaffoldingHelper from './ScaffoldingHelper';
 
 interface QuizGameProps {
   topic: Topic;
-  onComplete: (correct: number, total: number) => void;
+  onComplete: (correct: number, total: number, scaffoldData: ScaffoldData) => void;
   onBack: () => void;
+}
+
+export interface ScaffoldData {
+  totalHintsUsed: number;
+  avgScaffoldLevel: number;
+  autoTriggered: number;
+  manualTriggered: number;
 }
 
 const topicColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
@@ -14,6 +21,15 @@ const topicColors: Record<string, { bg: string; border: string; text: string; gl
   cahaya: { bg: 'from-fuchsia-500 to-pink-600', border: 'border-fuchsia-400/50', text: 'text-fuchsia-300', glow: 'shadow-fuchsia-500/30' },
   suhu: { bg: 'from-red-500 to-rose-600', border: 'border-red-400/50', text: 'text-red-300', glow: 'shadow-red-500/30' },
   getaran: { bg: 'from-emerald-500 to-teal-600', border: 'border-emerald-400/50', text: 'text-emerald-300', glow: 'shadow-emerald-500/30' },
+};
+
+// Scaffold level thresholds
+const IDLE_TIME_FOR_HINT = 15; // seconds before auto-hint
+const WRONG_ANSWERS_FOR_LEVEL: Record<number, number> = {
+  1: 1,  // 1 wrong answer → Level 1
+  2: 2,  // 2 wrong answers → Level 2
+  3: 3,  // 3 wrong answers → Level 3
+  4: 4,  // 4 wrong answers → Level 4
 };
 
 export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
@@ -26,8 +42,19 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
   const [animateIn, setAnimateIn] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
   const [timerActive, setTimerActive] = useState(true);
-  const [wrongStreak, setWrongStreak] = useState(0);
-  const [scaffoldUsed, setScaffoldUsed] = useState(0);
+  
+  // Scaffolding integration states
+  const [currentScaffoldLevel, setCurrentScaffoldLevel] = useState(0); // 0 = no hint, 1-4 = scaffold levels
+  const [wrongAttempts, setWrongAttempts] = useState(0); // wrong attempts on current question
+  const [idleTime, setIdleTime] = useState(0); // time without interaction
+  const [scaffoldExpanded, setScaffoldExpanded] = useState(false); // is scaffold panel open
+  const [autoHintShown, setAutoHintShown] = useState(false); // auto hint notification
+  const [scaffoldHistory, setScaffoldHistory] = useState<number[]>([]); // track levels used per question
+  const [totalHintsUsed, setTotalHintsUsed] = useState(0);
+  const [autoTriggered, setAutoTriggered] = useState(0);
+  const [manualTriggered, setManualTriggered] = useState(0);
+  const [showScaffoldNotification, setShowScaffoldNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const colors = topicColors[topic.id] || topicColors.gaya;
 
@@ -36,11 +63,13 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
     setShuffledQuestions(shuffled);
   }, [topic]);
 
+  // Main timer countdown
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (timerActive && timeLeft > 0 && !showFeedback) {
       interval = setInterval(() => {
         setTimeLeft(prev => prev - 1);
+        setIdleTime(prev => prev + 1);
       }, 1000);
     } else if (timeLeft === 0 && !showFeedback) {
       handleTimeUp();
@@ -48,27 +77,77 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, showFeedback]);
 
+  // Auto-scaffold based on idle time
+  const triggerIdleScaffold = useCallback(() => {
+    if (currentScaffoldLevel < 4) {
+      const newLevel = currentScaffoldLevel + 1;
+      setCurrentScaffoldLevel(newLevel);
+      setScaffoldExpanded(true);
+      setAutoTriggered(prev => prev + 1);
+      setTotalHintsUsed(prev => prev + 1);
+      setIdleTime(0);
+      showNotification(`🤔 Kamu diam sebentar, bantuan Level ${newLevel} muncul!`);
+    }
+  }, [currentScaffoldLevel]);
+
+  useEffect(() => {
+    if (idleTime >= IDLE_TIME_FOR_HINT && !showFeedback && currentScaffoldLevel < 4) {
+      triggerIdleScaffold();
+    }
+  }, [idleTime, showFeedback, currentScaffoldLevel, triggerIdleScaffold]);
+
+  // Auto-scaffold based on wrong attempts
+  useEffect(() => {
+    if (wrongAttempts > 0 && !showFeedback) {
+      const targetLevel = WRONG_ANSWERS_FOR_LEVEL[wrongAttempts] || 4;
+      if (targetLevel > currentScaffoldLevel) {
+        setCurrentScaffoldLevel(targetLevel);
+        setScaffoldExpanded(true);
+        showNotification(`💡 Bantuan Level ${targetLevel} terbuka!`);
+      }
+    }
+  }, [wrongAttempts, showFeedback, currentScaffoldLevel]);
+
+  const showNotification = (message: string) => {
+    setNotificationMessage(message);
+    setShowScaffoldNotification(true);
+    setTimeout(() => setShowScaffoldNotification(false), 3000);
+  };
+
   const handleTimeUp = () => {
     setShowFeedback(true);
     setIsCorrect(false);
     setTimerActive(false);
-    setWrongStreak(prev => prev + 1);
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showFeedback) return;
     
+    setIdleTime(0); // Reset idle timer on interaction
     setSelectedAnswer(answerIndex);
     setShowFeedback(true);
     setTimerActive(false);
     
     const correct = answerIndex === shuffledQuestions[currentQuestion].correctAnswer;
     setIsCorrect(correct);
+    
     if (correct) {
       setCorrectCount(prev => prev + 1);
-      setWrongStreak(0);
+      // Record scaffold level used for this question
+      setScaffoldHistory(prev => [...prev, currentScaffoldLevel]);
     } else {
-      setWrongStreak(prev => prev + 1);
+      setWrongAttempts(prev => prev + 1);
+    }
+  };
+
+  const handleManualScaffold = () => {
+    if (currentScaffoldLevel < 4) {
+      const newLevel = currentScaffoldLevel + 1;
+      setCurrentScaffoldLevel(newLevel);
+      setScaffoldExpanded(true);
+      setManualTriggered(prev => prev + 1);
+      setTotalHintsUsed(prev => prev + 1);
+      setIdleTime(0);
     }
   };
 
@@ -83,9 +162,24 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
         setTimeLeft(45);
         setTimerActive(true);
         setAnimateIn(true);
+        // Reset scaffolding for next question
+        setCurrentScaffoldLevel(0);
+        setWrongAttempts(0);
+        setIdleTime(0);
+        setScaffoldExpanded(false);
+        setAutoHintShown(false);
       } else {
-        const finalCorrect = correctCount;
-        onComplete(finalCorrect, shuffledQuestions.length);
+        // Calculate average scaffold level
+        const avgLevel = scaffoldHistory.length > 0
+          ? scaffoldHistory.reduce((a, b) => a + b, 0) / scaffoldHistory.length
+          : 0;
+        
+        onComplete(correctCount, shuffledQuestions.length, {
+          totalHintsUsed,
+          avgScaffoldLevel: avgLevel,
+          autoTriggered,
+          manualTriggered,
+        });
       }
     }, 300);
   };
@@ -96,8 +190,31 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
   const progress = ((currentQuestion + 1) / shuffledQuestions.length) * 100;
   const timerPercentage = (timeLeft / 45) * 100;
 
+  // Determine which options to highlight based on scaffold level
+  const getOptionHighlight = (index: number) => {
+    if (currentScaffoldLevel >= 4 && !showFeedback) {
+      // At level 4, subtly indicate correct answer
+      if (index === question.correctAnswer) {
+        return 'ring-1 ring-green-400/30';
+      }
+    }
+    if (currentScaffoldLevel >= 3 && !showFeedback && question.type === 'calculation') {
+      // At level 3 for calculation, could highlight formula-related options
+    }
+    return '';
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Scaffold Notification */}
+      {showScaffoldNotification && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-slideDown">
+          <div className="glass-card-strong border border-amber-400/40 rounded-2xl px-6 py-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 shadow-lg shadow-amber-500/20">
+            <p className="text-amber-200 font-bold text-sm">{notificationMessage}</p>
+          </div>
+        </div>
+      )}
+
       {/* Back Button & Progress */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -120,34 +237,70 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
             <span className="text-green-400">✓</span>
             <span className="text-sm font-bold text-green-300">{correctCount}</span>
           </div>
-          {scaffoldUsed > 0 && (
-            <div className="glass-card rounded-full px-3 py-1.5 flex items-center gap-1.5 border-amber-400/30">
-              <span className="text-xs">🆘</span>
-              <span className="text-sm font-bold text-amber-300">{scaffoldUsed}</span>
+          {/* Scaffold indicator */}
+          {currentScaffoldLevel > 0 && (
+            <div className="glass-card rounded-full px-3 py-1.5 flex items-center gap-1.5 border border-amber-400/30">
+              <span className="text-xs">🏗️</span>
+              <span className="text-sm font-bold text-amber-300">L{currentScaffoldLevel}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-3 bg-white/5 rounded-full mb-5 overflow-hidden glass-card">
+      {/* Progress Bar with scaffold level indicator */}
+      <div className="relative w-full h-3 bg-white/5 rounded-full mb-5 overflow-hidden glass-card">
         <div
           className={`h-full bg-gradient-to-r ${colors.bg} rounded-full transition-all duration-500 relative`}
           style={{ width: `${progress}%` }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
         </div>
+        {/* Scaffold level markers */}
+        <div className="absolute inset-0 flex items-center pointer-events-none">
+          {[1, 2, 3, 4].map((level) => (
+            <div
+              key={level}
+              className={`absolute w-1 h-full transition-all ${
+                currentScaffoldLevel >= level ? 'bg-amber-400/60' : 'bg-transparent'
+              }`}
+              style={{ left: `${level * 25}%` }}
+            ></div>
+          ))}
+        </div>
       </div>
 
-      {/* Wrong Streak Warning */}
-      {wrongStreak >= 2 && !showFeedback && (
-        <div className="mb-4 glass-card border border-amber-400/30 rounded-2xl p-4 animate-slideUp bg-gradient-to-r from-amber-500/10 to-orange-500/10">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl animate-wiggle">⚠️</span>
-            <div>
-              <p className="text-amber-200 font-bold text-sm">Hmm, sepertinya kamu butuh bantuan!</p>
-              <p className="text-amber-300/70 text-xs mt-0.5">Coba gunakan scaffolding di bawah untuk bantuan bertahap 🏗️</p>
-            </div>
+      {/* Scaffold Level Progress Bar (Visual) */}
+      {currentScaffoldLevel > 0 && !showFeedback && (
+        <div className="glass-card rounded-2xl p-3 mb-5 animate-slideDown">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Level Bantuan Aktif</span>
+            <span className="text-xs text-amber-300 font-bold">Level {currentScaffoldLevel}/4</span>
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((level) => (
+              <div
+                key={level}
+                className={`flex-1 h-2 rounded-full transition-all duration-500 ${
+                  level <= currentScaffoldLevel
+                    ? `bg-gradient-to-r ${
+                        level === 1 ? 'from-blue-400 to-blue-500' :
+                        level === 2 ? 'from-indigo-400 to-indigo-500' :
+                        level === 3 ? 'from-purple-400 to-purple-500' :
+                        'from-pink-400 to-pink-500'
+                      }`
+                    : 'bg-white/10'
+                }`}
+              ></div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-1.5">
+            {['💡 Petunjuk', '🤔 Penuntun', '🔑 Konsep', '📖 Lengkap'].map((label, i) => (
+              <span key={i} className={`text-[9px] ${
+                i < currentScaffoldLevel ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                {label}
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -157,7 +310,6 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
         <div className={`relative glass-card rounded-full px-5 py-2.5 flex items-center gap-3 border ${
           timeLeft <= 10 ? 'border-red-400/50 bg-red-500/10' : 'border-white/10'
         }`}>
-          {/* Circular progress */}
           <div className="relative w-10 h-10">
             <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
               <path
@@ -194,7 +346,6 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
       {/* Question Card */}
       <div className={`transition-all duration-300 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className={`glass-card-strong rounded-3xl p-6 md:p-8 mb-5 relative overflow-hidden shadow-2xl ${colors.glow}`}>
-          {/* Decorative gradient */}
           <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${colors.bg} opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`}></div>
           
           <div className="relative z-10">
@@ -231,12 +382,14 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
               }
             }
 
+            const highlightClass = getOptionHighlight(index);
+
             return (
               <button
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
                 disabled={showFeedback}
-                className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 ${optionStyle} ${!showFeedback ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
+                className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 ${optionStyle} ${highlightClass} ${!showFeedback ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
               >
                 <div className="flex items-center gap-3">
                   <span className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold border-2 transition-all ${
@@ -265,17 +418,30 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
           })}
         </div>
 
-        {/* Scaffolding Helper */}
-        <div className="mb-5">
-          <ScaffoldingHelper
-            scaffolding={question.scaffolding}
-            problemSolving={question.problemSolving}
-            questionType={question.type}
-            topicId={topic.id}
-          />
-        </div>
+        {/* Integrated Scaffolding - Progressive Disclosure */}
+        {!showFeedback && (
+          <div className="mb-5">
+            <ScaffoldingHelper
+              scaffolding={question.scaffolding}
+              problemSolving={question.problemSolving}
+              questionType={question.type}
+              topicId={topic.id}
+              currentLevel={currentScaffoldLevel}
+              onLevelChange={(level: number) => {
+                setCurrentScaffoldLevel(level);
+                if (level > 0) {
+                  setManualTriggered(prev => prev + 1);
+                  setTotalHintsUsed(prev => prev + 1);
+                }
+              }}
+              isExpanded={scaffoldExpanded}
+              onToggleExpand={() => setScaffoldExpanded(!scaffoldExpanded)}
+              mode="integrated"
+            />
+          </div>
+        )}
 
-        {/* Feedback Section */}
+        {/* Feedback Section with Integrated Scaffolding */}
         {showFeedback && (
           <div className={`animate-slideUp rounded-3xl p-6 border ${
             isCorrect
@@ -290,13 +456,23 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
               </div>
               <div className="flex-1">
                 <h3 className={`font-bold text-lg mb-2 ${isCorrect ? 'text-green-300' : 'text-orange-300'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                  {isCorrect ? question.feedback : 'Belum tepat, tapi jangan menyerah! 💪'}
+                  {isCorrect ? question.feedback : wrongAttempts > 1 ? `Belum tepat (Percobaan ke-${wrongAttempts})` : 'Belum tepat, coba lagi! 💪'}
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
                   {question.explanation}
                 </p>
               </div>
             </div>
+
+            {/* Scaffold Summary in Feedback */}
+            {currentScaffoldLevel > 0 && (
+              <div className="mt-4 glass-card rounded-xl p-3">
+                <p className="text-xs text-gray-400 text-center">
+                  🏗️ Kamu menggunakan bantuan Level {currentScaffoldLevel}
+                  {currentScaffoldLevel >= 3 && ' — Coba berlatih lebih mandiri下次!'}
+                </p>
+              </div>
+            )}
 
             {/* Problem Solving Summary */}
             {!isCorrect && question.problemSolving && question.problemSolving.length > 0 && (

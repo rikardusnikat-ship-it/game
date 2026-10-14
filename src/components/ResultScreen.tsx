@@ -1,8 +1,11 @@
+import { ScaffoldData } from './QuizGame';
+
 interface GameResult {
   topicName: string;
   score: number;
   totalQuestions: number;
   correctAnswers: number;
+  scaffoldData?: ScaffoldData;
 }
 
 interface ResultScreenProps {
@@ -21,48 +24,68 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
   let learningTip = '';
   let bgGradient = '';
 
+  // Adjust feedback based on scaffold usage
+  const scaffoldLevel = result.scaffoldData?.avgScaffoldLevel || 0;
+  const hintsUsed = result.scaffoldData?.totalHintsUsed || 0;
+
   if (percentage === 100) {
     grade = 'SEMPURNA!';
     gradeColor = 'from-yellow-300 via-amber-400 to-orange-500';
     message = 'Luar biasa! Kamu menguasai materi ini dengan sangat baik!';
     emoji = '🏆';
-    learningTip = 'Pertahankan! Coba topik lain untuk memperluas pengetahuanmu.';
+    learningTip = scaffoldLevel === 0 
+      ? 'Kamu tidak perlu bantuan sama sekali! Pertahankan kemandirianmu!'
+      : 'Pertahankan! Coba topik lain untuk memperluas pengetahuanmu.';
     bgGradient = 'from-yellow-500/10 via-amber-500/10 to-orange-500/10';
   } else if (percentage >= 80) {
     grade = 'HEBAT!';
     gradeColor = 'from-green-300 via-emerald-400 to-teal-500';
     message = 'Pemahaman kamu sangat bagus! Terus pertahankan!';
     emoji = '🌟';
-    learningTip = 'Hampir sempurna! Review soal yang salah untuk penguasaan penuh.';
+    learningTip = scaffoldLevel <= 1
+      ? 'Hampir sempurna! Kamu sangat mandiri dalam belajar.'
+      : 'Review soal yang salah dan coba kurangi penggunaan scaffolding.';
     bgGradient = 'from-green-500/10 via-emerald-500/10 to-teal-500/10';
   } else if (percentage >= 60) {
     grade = 'BAGUS!';
     gradeColor = 'from-blue-300 via-cyan-400 to-sky-500';
     message = 'Kamu sudah cukup memahami materi ini. Coba ulangi!';
     emoji = '👍';
-    learningTip = 'Gunakan scaffolding Level 1-2 sebelum menjawab untuk memperkuat pemahaman.';
+    learningTip = scaffoldLevel >= 3
+      ? 'Coba baca scaffolding Level 1-2 saja dulu sebelum menjawab, supaya lebih mandiri.'
+      : 'Gunakan scaffolding Level 1-2 untuk memperkuat pemahaman sebelum menjawab.';
     bgGradient = 'from-blue-500/10 via-cyan-500/10 to-sky-500/10';
   } else if (percentage >= 40) {
     grade = 'LUMAYAN!';
     gradeColor = 'from-orange-300 via-amber-400 to-yellow-500';
     message = 'Terus belajar ya! Baca penjelasan di setiap soal.';
     emoji = '📚';
-    learningTip = 'Coba gunakan Problem Solving Strategy: Identifikasi → Rencanakan → Laksanakan → Evaluasi.';
+    learningTip = 'Gunakan Problem Solving Strategy: Identifikasi → Rencanakan → Laksanakan → Evaluasi. Scaffolding adalah teman belajarmu!';
     bgGradient = 'from-orange-500/10 via-amber-500/10 to-yellow-500/10';
   } else {
     grade = 'SEMANGAT!';
     gradeColor = 'from-pink-300 via-rose-400 to-red-500';
     message = 'Jangan menyerah! Pelajari kembali dan coba lagi.';
     emoji = '💪';
-    learningTip = 'Mulai dari scaffolding Level 1, naik bertahap. Gunakan Problem Solving steps!';
+    learningTip = 'Gunakan scaffolding secara bertahap! Mulai dari Level 1, naik perlahan. Itu bukan kelemahan, itu strategi belajar yang cerdas!';
     bgGradient = 'from-pink-500/10 via-rose-500/10 to-red-500/10';
   }
+
+  // Scaffold independence rating
+  const getIndependenceRating = () => {
+    if (hintsUsed === 0) return { label: 'Sangat Mandiri', icon: '🦅', color: 'text-green-300', desc: 'Tidak menggunakan scaffolding sama sekali!' };
+    if (scaffoldLevel <= 1) return { label: 'Mandiri', icon: '🌟', color: 'text-blue-300', desc: 'Hanya menggunakan sedikit bantuan' };
+    if (scaffoldLevel <= 2) return { label: 'Cukup Mandiri', icon: '👍', color: 'text-cyan-300', desc: 'Menggunakan bantuan secukupnya' };
+    if (scaffoldLevel <= 3) return { label: 'Perlu Latihan', icon: '📖', color: 'text-amber-300', desc: 'Coba kurangi penggunaan scaffolding' };
+    return { label: 'Butuh Bimbingan', icon: '🤝', color: 'text-orange-300', desc: 'Tidak apa-apa, terus berlatih!' };
+  };
+
+  const independence = getIndependenceRating();
 
   return (
     <div className="max-w-lg mx-auto text-center animate-fadeIn">
       {/* Result Card */}
       <div className={`glass-card-strong rounded-[2rem] p-8 md:p-10 relative overflow-hidden bg-gradient-to-br ${bgGradient}`}>
-        {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl translate-y-1/2 translate-x-1/2"></div>
 
@@ -79,7 +102,7 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
           <p className="text-gray-300 mb-8 text-lg">{message}</p>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="glass-card rounded-2xl p-4">
               <div className="text-3xl font-bold text-green-300" style={{ fontFamily: 'Fredoka, sans-serif' }}>{result.correctAnswers}</div>
               <div className="text-xs text-gray-400 mt-1 font-medium">✓ Benar</div>
@@ -95,7 +118,7 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
           </div>
 
           {/* Score Bar */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
               <span className="font-medium">Progress</span>
               <span className="font-bold text-white">{percentage}%</span>
@@ -110,14 +133,85 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
             </div>
           </div>
 
+          {/* Scaffold Independence Rating */}
+          {result.scaffoldData && (
+            <div className="glass-card rounded-2xl p-5 mb-5 text-left">
+              <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <span className="text-lg">🏗️</span> Analisis Kemandirian Belajar
+              </h4>
+              
+              {/* Independence Badge */}
+              <div className="flex items-center gap-4 mb-4 p-3 bg-white/5 rounded-xl">
+                <div className="text-4xl">{independence.icon}</div>
+                <div className="flex-1">
+                  <p className={`font-bold ${independence.color}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    {independence.label}
+                  </p>
+                  <p className="text-xs text-gray-400">{independence.desc}</p>
+                </div>
+              </div>
+
+              {/* Scaffold Stats */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="bg-white/5 rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-amber-300" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    {hintsUsed}
+                  </div>
+                  <div className="text-[10px] text-gray-400">Total Hint</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-blue-300" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    L{scaffoldLevel.toFixed(1)}
+                  </div>
+                  <div className="text-[10px] text-gray-400">Avg Level</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-purple-300" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    {result.scaffoldData.autoTriggered}
+                  </div>
+                  <div className="text-[10px] text-gray-400">Auto Hint</div>
+                </div>
+              </div>
+
+              {/* Scaffold Level Visualization */}
+              <div className="space-y-2">
+                <p className="text-xs text-gray-400 font-medium">Level scaffolding per soal:</p>
+                <div className="flex gap-1">
+                  {Array.from({ length: result.totalQuestions }).map((_, i) => {
+                    const level = i < result.correctAnswers ? 0 : Math.min(4, Math.ceil(scaffoldLevel));
+                    return (
+                      <div
+                        key={i}
+                        className={`flex-1 h-2 rounded-full ${
+                          i < result.correctAnswers
+                            ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                            : `bg-gradient-to-r ${
+                                scaffoldLevel <= 1 ? 'from-blue-400 to-blue-500' :
+                                scaffoldLevel <= 2 ? 'from-indigo-400 to-indigo-500' :
+                                scaffoldLevel <= 3 ? 'from-purple-400 to-purple-500' :
+                                'from-pink-400 to-pink-500'
+                              }`
+                        }`}
+                      ></div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between text-[9px] text-gray-500">
+                  <span>Soal 1</span>
+                  <span>Soal {result.totalQuestions}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Topic Info */}
-          <div className="glass-card rounded-2xl p-4 mb-6">
+          <div className="glass-card rounded-2xl p-4 mb-5">
             <p className="text-xs text-gray-400 mb-1">Topik yang dimainkan:</p>
             <p className="text-white font-bold text-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>{result.topicName}</p>
           </div>
 
           {/* Stars */}
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex justify-center gap-2 mb-6">
             {[1, 2, 3, 4, 5].map((star) => (
               <span
                 key={star}
@@ -126,7 +220,6 @@ export default function ResultScreen({ result, onPlayAgain, onBackToHome }: Resu
                     ? 'text-yellow-400 scale-110 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]'
                     : 'text-gray-700'
                 }`}
-                style={{ animationDelay: `${star * 200}ms` }}
               >
                 ★
               </span>
