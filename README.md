@@ -1,152 +1,156 @@
-# PhysicsQuest - Game Fisika SMP dengan Scaffolding Berjenjang
+# PhysicsQuest - Platform Belajar Fisika Online untuk SMP
 
 ## 🎯 Deskripsi
-PhysicsQuest adalah game pembelajaran fisika interaktif untuk siswa SMP yang dilengkapi dengan **scaffolding berjenjang** dan **strategi problem solving** untuk membantu siswa memahami konsep fisika secara mandiri.
+PhysicsQuest adalah platform pembelajaran fisika interaktif berbasis web untuk siswa SMP dengan sistem autentikasi, dashboard personal, leaderboard online, dan progress tracking. Dilengkapi dengan **scaffolding berjenjang** dan **strategi problem solving** untuk membantu siswa memahami konsep fisika secara mandiri.
 
-## ✨ Fitur Utama
+## ✨ Fitur Utama Platform
 
-### 1. 🏗️ Scaffolding Berjenjang (4 Level)
-Sistem bantuan bertahap yang memberikan scaffolding dari yang paling ringan hingga penjelasan lengkap:
+### 🔐 Sistem Autentikasi
+- **Registrasi** - Siswa dapat membuat akun dengan data lengkap (nama, sekolah, kelas, avatar)
+- **Login** - Masuk dengan username/email dan password
+- **Session Management** - Tetap login meskipun browser ditutup
+- **Demo Accounts** - 5 akun demo untuk mencoba platform
 
-- **Level 1 - Petunjuk Ringan** 💡
-  - Mengarahkan pemikiran tanpa memberi jawaban langsung
-  - Membantu siswa mulai berpikir tentang konsep
-  
-- **Level 2 - Pertanyaan Penuntun** 🤔
-  - Membantu identifikasi konsep dan variabel
-  - Pertanyaan yang memandu ke arah jawaban
-  
-- **Level 3 - Konsep/Rumus Kunci** 🔑
-  - Memberikan rumus atau konsep kunci
-  - Langkah-langkah penyelesaian
-  
-- **Level 4 - Penjelasan Lengkap** 📖
-  - Jawaban detail dengan pemahaman penuh
-  - Penjelasan komprehensif
+### 🏠 Dashboard Personal
+- **Welcome Banner** - Sambutan personal dengan avatar siswa
+- **Quick Stats** - Total skor, game dimainkan, akurasi, best streak
+- **Progress Overview** - Visualisasi progress per topik
+- **Achievements** - Badge pencapaian yang diraih
+- **Topic Selection** - Pilih topik untuk dimainkan
 
-**Cara Penggunaan:**
-- Tombol "Butuh Bantuan?" muncul di setiap soal
-- Siswa dapat naik level scaffolding secara bertahap
-- Sistem otomatis menawarkan scaffolding setelah 2x jawaban salah berturut-turut
+### 🏆 Leaderboard Online
+- **Peringkat Global** - Lihat peringkat semua siswa berdasarkan total skor
+- **Top 3 Podium** - Tampilan khusus untuk juara 1, 2, dan 3
+- **Current User Highlight** - Peringkat kamu di-highlight
+- **Real-time Update** - Peringkat update otomatis setelah bermain
 
-### 2. 🧩 Problem Solving Strategy (4 Langkah)
-Strategi terstruktur untuk menyelesaikan soal hitungan:
+### 👤 Profil Siswa
+- **Informasi Lengkap** - Nama, username, email, sekolah, kelas
+- **Statistik Detail** - Total skor, game, akurasi, best streak
+- **Progress Per Topik** - Progress bar untuk setiap topik
+- **Achievements Gallery** - Semua badge yang sudah diraih
+- **Account Info** - Tanggal bergabung, total soal dijawab
 
-1. **🔍 Identifikasi**
-   - Apa yang diketahui?
-   - Apa yang ditanya?
+### 📊 Progress Tracking
+- **Per-Topic Progress** - Track kemajuan di setiap topik
+- **Attempts Counter** - Berapa kali sudah mencoba
+- **Best Score** - Skor terbaik yang pernah diraih
+- **Completion Status** - Tandai topik yang sudah diselesaikan
+- **Last Played** - Kapan terakhir kali bermain
 
-2. **📐 Rencanakan**
-   - Rumus/konsep apa yang digunakan?
-   - Strategi penyelesaian
+### 🏗️ Scaffolding Berjenjang (4 Level)
+1. **💡 Level 1 - Petunjuk Ringan**: Mengarahkan pemikiran
+2. **🤔 Level 2 - Pertanyaan Penuntun**: Identifikasi konsep
+3. **🔑 Level 3 - Konsep/Rumus Kunci**: Langkah penyelesaian
+4. **📖 Level 4 - Penjelasan Lengkap**: Pemahaman penuh
 
-3. **✏️ Laksanakan**
-   - Hitung langkah demi langkah
-   - Substitusi nilai
+### 🧩 Problem Solving Strategy (4 Langkah)
+1. **🔍 Identifikasi** - Apa yang diketahui & ditanya
+2. **📐 Rencanakan** - Rumus/konsep yang dipakai
+3. **✏️ Laksanakan** - Hitung langkah demi langkah
+4. **✅ Evaluasi** - Cek jawaban & verifikasi
 
-4. **✓ Evaluasi**
-   - Cek jawaban
-   - Verifikasi satuan
-   - Pastikan hasil masuk akal
-
-**Implementasi:**
-- Tersedia untuk soal tipe "calculation" (hitungan)
-- Dapat diakses melalui panel "Strategi Problem Solving"
-- Ditampilkan juga sebagai ringkasan setelah jawaban salah
-
-### 3. 📚 5 Topik Fisika SMP
+## 🎮 5 Topik Fisika SMP
 - 🚀 **Gaya & Hukum Newton** (6 soal)
 - ⚡ **Energi & Usaha** (6 soal)
 - 🔦 **Cahaya & Optik** (6 soal)
 - 🌡️ **Suhu & Kalor** (6 soal)
 - 🌊 **Getaran & Gelombang** (6 soal)
 
-### 4. 🎮 Fitur Game
-- ⏱️ Timer 45 detik per soal
-- 🔥 Streak counter untuk jawaban benar berturut-turut
-- ⭐ Sistem skor dan bintang
-- 🎲 Soal diacak setiap kali bermain
-- 📊 Progress bar visual
-- 🎨 UI/UX modern dengan animasi
+**Total: 30 soal dengan scaffolding lengkap**
 
-### 5. 📊 Tipe Soal
-- **📚 Konsep** - Pemahaman teori dan definisi
-- **🧮 Hitungan** - Soal dengan perhitungan matematis
-- **🔧 Penerapan** - Aplikasi konsep dalam kehidupan sehari-hari
+## 🏅 Sistem Pencapaian (Achievements)
+- 👋 **Selamat Datang** - Bergabung di PhysicsQuest
+- 🎮 **Game Pertama** - Menyelesaikan game pertama
+- 💯 **Skor Sempurna** - Mendapat nilai 100%
+- 🔥 **5x Streak** - 5 game sempurna berturut-turut
+- ⚡ **10x Streak** - 10 game sempurna berturut-turut
+- 🌟 **Semua Topik** - Menyelesaikan semua topik
 
-## 🎓 Pedagogi
+## 🛠️ Teknologi
+- **React 18** + TypeScript
+- **Tailwind CSS** - Styling modern & responsive
+- **Vite** - Build tool super cepat
+- **LocalStorage** - Penyimpanan data offline
+- **Context API** - State management
 
-### Scaffolding Berjenjang
-Berdasarkan teori Vygotsky tentang Zone of Proximal Development (ZPD):
-- Siswa mendapat bantuan sesuai tingkat kesulitan yang dihadapi
-- Bantuan berkurang secara bertahap seiring peningkatan kemampuan
-- Mendorong kemandirian belajar
+## 📁 Struktur File
 
-### Problem Solving Strategy
-Mengadopsi model Polya (1945):
-- Melatih berpikir sistematis
-- Membangun kebiasaan terstruktur
-- Meningkatkan kemampuan metakognisi
+```
+src/
+├── App.tsx                      # Main app dengan routing
+├── contexts/
+│   └── AuthContext.tsx          # Authentication & user state
+├── components/
+│   ├── LoginPage.tsx            # Halaman login/register
+│   ├── Dashboard.tsx            # Dashboard utama
+│   ├── ProfilePage.tsx          # Profil siswa
+│   ├── Leaderboard.tsx          # Papan peringkat
+│   ├── QuizGame.tsx             # Game quiz dengan scaffolding
+│   ├── ScaffoldingHelper.tsx    # Komponen scaffolding
+│   ├── TopicCard.tsx            # Card topik
+│   ├── ResultScreen.tsx         # Halaman hasil
+│   └── ParticleBackground.tsx   # Background animasi
+├── data/
+│   └── questions.ts             # Bank soal + scaffolding
+└── index.css                    # Styling & animasi
+```
 
 ## 🚀 Cara Menggunakan
 
 ### Untuk Siswa:
-1. Pilih topik yang ingin dipelajari
-2. Baca soal dengan seksama
-3. Jika kesulitan, klik "Butuh Bantuan?"
-4. Gunakan scaffolding Level 1 terlebih dahulu
-5. Naik ke level berikutnya hanya jika masih butuh bantuan
-6. Untuk soal hitungan, gunakan Problem Solving Strategy
-7. Baca penjelasan setelah menjawab untuk memperkuat pemahaman
+1. **Daftar** - Buat akun dengan data lengkap
+2. **Login** - Masuk ke platform
+3. **Pilih Topik** - Mulai dari topik yang diinginkan
+4. **Jawab Soal** - Gunakan scaffolding jika butuh bantuan
+5. **Lihat Hasil** - Cek skor dan penjelasan
+6. **Cek Progress** - Lihat kemajuan di dashboard
+7. **Kompetisi** - Lihat peringkat di leaderboard
 
 ### Untuk Guru:
-- Gunakan sebagai media pembelajaran interaktif
-- Monitor penggunaan scaffolding (ditampilkan di progress)
-- Diskusikan strategi problem solving di kelas
-- Evaluasi berdasarkan level scaffolding yang digunakan
+- **Monitor Progress** - Lihat kemajuan siswa melalui profil
+- **Evaluasi** - Cek akurasi dan topik yang perlu diperkuat
+- **Motivasi** - Gunakan leaderboard untuk kompetisi sehat
+- **Achievement** - Dorong siswa meraih semua badge
 
-## 🛠️ Teknologi
-- React + TypeScript
-- Tailwind CSS
-- Vite
-- Responsive Design
+## 💾 Penyimpanan Data
+Semua data disimpan di **localStorage** browser:
+- `physicsquest_users` - Daftar semua user
+- `physicsquest_current_user` - User yang sedang login
 
-## 📈 Manfaat Pembelajaran
+**Catatan:** Untuk implementasi production, disarankan menggunakan backend database (Firebase, Supabase, dll) untuk sinkronisasi data antar device.
 
-1. **Kemandirian Belajar** - Siswa belajar meminta bantuan secara bertahap
-2. **Metakognisi** - Siswa sadar akan tingkat pemahamannya
-3. **Problem Solving** - Terlatih menyelesaikan masalah secara sistematis
-4. **Feedback Langsung** - Penjelasan instan untuk setiap jawaban
-5. **Motivasi** - Sistem gamifikasi meningkatkan engagement
+## 🎨 Desain UI/UX
+- **Glassmorphism** - Efek kaca modern
+- **Gradient Colors** - Warna gradient yang menarik
+- **Smooth Animations** - Animasi halus dan engaging
+- **Responsive Design** - Bisa dimainkan di HP, tablet, laptop
+- **Playful Fonts** - Fredoka & Nunito untuk kesan fun
+- **Particle Background** - Efek partikel yang dinamis
 
-## 📝 Struktur File
+## 📈 Learning Outcomes
+Setelah menggunakan PhysicsQuest, siswa mampu:
+- ✅ Memahami konsep fisika SMP dengan mendalam
+- ✅ Menyelesaikan soal hitungan dengan strategi terstruktur
+- ✅ Menggunakan scaffolding untuk belajar mandiri
+- ✅ Mengembangkan kemampuan problem solving
+- ✅ Termotivasi melalui gamifikasi dan kompetisi
+- ✅ Track progress belajar secara visual
 
-```
-src/
-├── App.tsx                    # Main component & routing
-├── data/
-│   └── questions.ts          # Bank soal + scaffolding + problem solving
-├── components/
-│   ├── TopicCard.tsx         # Card topik di halaman utama
-│   ├── QuizGame.tsx          # Component quiz dengan scaffolding
-│   ├── ScaffoldingHelper.tsx # Component scaffolding berjenjang
-│   └── ResultScreen.tsx      # Halaman hasil + tips belajar
-└── index.css                 # Styling & animasi
-```
+## 🔮 Future Enhancements
+- [ ] Backend database untuk multi-device sync
+- [ ] Real-time multiplayer quiz
+- [ ] Teacher dashboard untuk monitoring kelas
+- [ ] Export progress report ke PDF
+- [ ] Social features (friend list, chat)
+- [ ] More topics (listrik, magnet, dll)
+- [ ] Mobile app (React Native)
 
-## 🎯 Learning Outcomes
-
-Setelah menggunakan PhysicsQuest, siswa diharapkan mampu:
-- Memahami konsep fisika SMP dengan lebih mendalam
-- Menyelesaikan soal hitungan dengan strategi terstruktur
-- Menggunakan scaffolding secara efektif untuk belajar mandiri
-- Mengembangkan kemampuan problem solving
-- Meningkatkan motivasi belajar fisika
-
-## 📞 Dukungan
-
+## 📞 Support
 Untuk pertanyaan atau saran pengembangan, silakan hubungi pengembang.
 
 ---
 
-**PhysicsQuest** - Belajar Fisika Jadi Menyenangkan dengan Scaffolding Berjenjang! 🚀
+**PhysicsQuest** - Platform Belajar Fisika Online yang Menyenangkan! 🚀⚛️
+
+*Dibuat dengan ❤️ untuk siswa SMP Indonesia*
