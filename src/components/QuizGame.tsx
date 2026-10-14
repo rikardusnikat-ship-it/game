@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Topic, Question } from '../data/questions';
+import ScaffoldingHelper from './ScaffoldingHelper';
 
 interface QuizGameProps {
   topic: Topic;
@@ -15,11 +16,12 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
   const [isCorrect, setIsCorrect] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [animateIn, setAnimateIn] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(45);
   const [timerActive, setTimerActive] = useState(true);
+  const [wrongStreak, setWrongStreak] = useState(0);
+  const [scaffoldUsed, setScaffoldUsed] = useState(0);
 
   useEffect(() => {
-    // Shuffle questions
     const shuffled = [...topic.questions].sort(() => Math.random() - 0.5);
     setShuffledQuestions(shuffled);
   }, [topic]);
@@ -36,10 +38,16 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, showFeedback]);
 
+  // Track wrong streak for warning display
+  useEffect(() => {
+    // Wrong streak is tracked for warning purposes
+  }, [wrongStreak]);
+
   const handleTimeUp = () => {
     setShowFeedback(true);
     setIsCorrect(false);
     setTimerActive(false);
+    setWrongStreak(prev => prev + 1);
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
@@ -53,6 +61,9 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
     setIsCorrect(correct);
     if (correct) {
       setCorrectCount(prev => prev + 1);
+      setWrongStreak(0);
+    } else {
+      setWrongStreak(prev => prev + 1);
     }
   };
 
@@ -64,7 +75,7 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
         setSelectedAnswer(null);
         setShowFeedback(false);
         setIsCorrect(false);
-        setTimeLeft(30);
+        setTimeLeft(45);
         setTimerActive(true);
         setAnimateIn(true);
       } else {
@@ -82,13 +93,13 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Back Button & Progress */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19l-7-7 7-7" />
           </svg>
           <span className="text-sm">Kembali</span>
         </button>
@@ -99,19 +110,36 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
           <span className="text-sm font-bold text-green-400">
             ✓ {correctCount}
           </span>
+          {scaffoldUsed > 0 && (
+            <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full">
+              🆘 {scaffoldUsed}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full h-2 bg-white/10 rounded-full mb-8 overflow-hidden">
+      <div className="w-full h-2 bg-white/10 rounded-full mb-4 overflow-hidden">
         <div
           className={`h-full bg-gradient-to-r ${topic.color} rounded-full transition-all duration-500`}
           style={{ width: `${progress}%` }}
         ></div>
       </div>
 
+      {/* Wrong Streak Warning */}
+      {wrongStreak >= 2 && !showFeedback && (
+        <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 animate-slideUp">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            <p className="text-amber-300 text-sm">
+              Kamu sudah {wrongStreak}x menjawab belum tepat. Coba gunakan scaffolding untuk bantuan bertahap!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Timer */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-4">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
           timeLeft <= 10 ? 'border-red-500/50 bg-red-500/10' : 'border-white/20 bg-white/5'
         }`}>
@@ -126,10 +154,18 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
 
       {/* Question Card */}
       <div className={`transition-all duration-300 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 md:p-8 mb-6">
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 md:p-8 mb-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">{topic.icon}</span>
             <span className="text-sm text-gray-400">{topic.name}</span>
+            <span className={`ml-auto text-xs px-2 py-1 rounded-full ${
+              question.type === 'calculation' ? 'bg-blue-500/20 text-blue-300' :
+              question.type === 'application' ? 'bg-green-500/20 text-green-300' :
+              'bg-purple-500/20 text-purple-300'
+            }`}>
+              {question.type === 'calculation' ? '🧮 Hitungan' :
+               question.type === 'application' ? '🔧 Penerapan' : '📚 Konsep'}
+            </span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white leading-relaxed">
             {question.question}
@@ -137,7 +173,7 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
         </div>
 
         {/* Options */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-3 mb-4">
           {question.options.map((option, index) => {
             let optionStyle = 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20';
             
@@ -191,6 +227,15 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
           })}
         </div>
 
+        {/* Scaffolding Helper - always accessible */}
+        <div className="mb-4">
+          <ScaffoldingHelper
+            scaffolding={question.scaffolding}
+            problemSolving={question.problemSolving}
+            questionType={question.type}
+          />
+        </div>
+
         {/* Feedback Section */}
         {showFeedback && (
           <div className={`animate-slideUp rounded-2xl p-6 border ${
@@ -209,6 +254,26 @@ export default function QuizGame({ topic, onComplete, onBack }: QuizGameProps) {
                 </p>
               </div>
             </div>
+
+            {/* Problem Solving Summary (shown after wrong answer for calculation questions) */}
+            {!isCorrect && question.problemSolving && question.problemSolving.length > 0 && (
+              <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                <h4 className="text-blue-300 font-bold text-sm mb-3 flex items-center gap-2">
+                  <span>🧩</span> Ringkasan Strategi Problem Solving:
+                </h4>
+                <div className="space-y-2">
+                  {question.problemSolving.map((step) => (
+                    <div key={step.step} className="flex items-start gap-2">
+                      <span className="text-sm">{step.icon}</span>
+                      <div>
+                        <span className="text-blue-300 text-xs font-bold">{step.title}: </span>
+                        <span className="text-gray-300 text-xs">{step.content}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <button
               onClick={handleNext}

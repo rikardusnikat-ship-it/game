@@ -24,6 +24,10 @@
   .animate-pulse {
     animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
 }
 
 @keyframes fadeIn {
@@ -66,6 +70,17 @@
   }
 }
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -82,4 +97,10 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(168, 85, 247, 0.4);
+  color: white;
 }
